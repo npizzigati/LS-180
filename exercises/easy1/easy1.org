@@ -1,0 +1,103 @@
+* Easy1
+** Create a new database called animals
+In psql console, execute command: CREATE DATABASE animals
+** Operations on the animals database
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database animals
+:END:
+*** CREATE birds table
+#+begin_src sql
+CREATE TABLE birds(
+  id serial PRIMARY KEY,
+  name varchar(25),
+  age int,
+  species varchar(15));
+#+end_src
+*** Insert data 
+#+begin_src sql
+INSERT INTO birds (name, age, species)
+VALUES ('Charlie', 3, 'Finch'),
+('Allie', 5, 'Owl'),
+('Jennifer', 3, 'Magpie'),
+('Jamie', 4, 'Owl'),
+('Roy', 8, 'Crow');
+#+end_src
+*** Query current contents
+#+begin_src sql
+SELECT * FROM birds;
+#+end_src
+
+#+RESULTS:
+|---|
+
+*** WHERE clause 
+#+begin_src sql
+    SELECT * FROM birds
+    WHERE age < 5;
+#+end_src
+
+#+RESULTS:
+| id | name     | age | species |
+|----+----------+-----+---------|
+|  1 | Charlie  |   3 | Finch   |
+|  3 | Jennifer |   3 | Magpie  |
+|  4 | Jamie    |   4 | Owl     |
+*** Update data
+#+begin_src sql
+    UPDATE birds
+    SET species = 'Raven' 
+    WHERE species = 'Crow';
+#+end_src
+
+#+RESULTS:
+| UPDATE 1 |
+|----------|
+**** Further exploration: change Jamie's species to Hawk 
+#+begin_src sql
+    UPDATE birds
+    SET species = 'Hawk'
+    WHERE name = 'Jamie';
+#+end_src
+
+#+RESULTS:
+| UPDATE 1 |
+|----------|
+**** Delete Data
+#+begin_src sql
+DELETE FROM birds
+    WHERE age = 3
+    AND species = 'Finch';
+#+end_src
+
+#+RESULTS:
+| DELETE 1 |
+|----------|
+**** Add constraint
+#+begin_src sql
+  ALTER TABLE birds
+  ADD CONSTRAINT age_check CHECK(age > 0);
+#+end_src
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+**** Test constraint
+#+begin_src sql
+    INSERT INTO birds (name, age, species) VALUES
+    ('negativebird', -3, 'Prebirth');
+#+end_src
+
+#+RESULTS:
+|---|
+**** Drop table
+#+begin_src sql
+  DROP TABLE birds;
+#+end_src
+**** Drop database
+#+begin_src sql
+  DROP database animals;
+#+end_src
+
+#+RESULTS:
+|---|
+
