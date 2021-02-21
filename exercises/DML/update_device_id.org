@@ -1,0 +1,188 @@
+* Update device id
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database workshop
+:END:
+** We've realized that the last two parts we're using for device number 2, "Gyroscope", actually belong to an "Accelerometer". Write an SQL statement that will associate the last two parts from our parts table with an "Accelerometer" instead of a "Gyroscope".
+
+#+BEGIN_SRC sql
+  BEGIN;
+  WITH part1 AS (
+    SELECT p.id
+      FROM parts AS p
+             INNER JOIN devices AS d
+             ON d.name = 'Gyroscope'
+     ORDER BY p.id DESC LIMIT 1
+  ), part2 AS (
+    SELECT p.id
+      FROM parts AS p
+             INNER JOIN devices AS d
+             ON d.name = 'Gyroscope'
+     ORDER BY p.id DESC LIMIT 1 offset 1
+  ), acc AS (
+      SELECT id
+        FROM devices
+       WHERE name = 'Accelerometer'
+       LIMIT 1
+  ), gyro AS (
+      SELECT id
+        FROM devices
+       WHERE name = 'Gyroscope'
+       LIMIT 1
+  )
+      UPDATE parts
+      SET device_id = (SELECT id FROM acc)
+      WHERE id = (SELECT id FROM part1) OR
+      id = (SELECT id FROM part2);
+  COMMIT;
+#+END_SRC
+
+#+RESULTS:
+| BEGIN    |
+|----------|
+| UPDATE 2 |
+| COMMIT   |
+
+check it
+
+#+BEGIN_SRC sql
+  SELECT p.id, d.name
+    FROM parts AS p
+           LEFT OUTER JOIN
+           devices AS d
+           ON p.device_id = d.id;
+#+END_SRC
+
+#+RESULTS:
+| id | name          |
+|----+---------------|
+|  1 | Accelerometer |
+|  2 | Accelerometer |
+|  3 | Accelerometer |
+|  4 | Gyroscope     |
+|  5 | Gyroscope     |
+|  6 | Gyroscope     |
+|  7 | Gyroscope     |
+|  8 | Gyroscope     |
+|  9 |               |
+| 10 |               |
+| 11 | Accelerometer |
+| 12 | Accelerometer |
+
+Oooh, that didn't work. Let's set the table to the way it was before
+#+BEGIN_SRC sql
+  DELETE FROM parts
+   WHERE id = 11 OR id = 12;
+
+#+END_SRC
+
+#+RESULTS:
+| DELETE 2 |
+|----------|
+
+check to make sure we've set things back
+#+BEGIN_SRC sql
+  SELECT p.id, d.name
+    FROM parts AS p
+           LEFT OUTER JOIN
+           devices AS d
+           ON p.device_id = d.id;
+#+END_SRC
+
+#+RESULTS:
+| id | name          |
+|----+---------------|
+|  1 | Accelerometer |
+|  2 | Accelerometer |
+|  3 | Accelerometer |
+|  4 | Gyroscope     |
+|  5 | Gyroscope     |
+|  6 | Gyroscope     |
+|  7 | Gyroscope     |
+|  8 | Gyroscope     |
+|  9 |               |
+| 10 |               |
+
+ No, that wasn't right. I didn't want to delete the part, but rather only the association with a device. Let's try this again... Let's recreate a couple more parts and assign them to the accelerometer device:
+#+BEGIN_SRC sql
+  INSERT INTO parts (part_number, device_id)
+  VALUES
+    (11, 1),
+    (12, 1);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 2 |
+|------------|
+
+This is getting way too insane...
+Okay, but that doesn't really matter that much.
+Let's figure out what was wrong with my original transaction.
+
+#+BEGIN_SRC sql
+  BEGIN;
+  WITH part1 AS (
+    SELECT p.id
+      FROM parts AS p
+             INNER JOIN devices AS d
+             ON p.device_id = d.id
+             where d.name = 'Gyroscope'
+     ORDER BY p.id DESC LIMIT 1
+  ), part2 AS (
+    SELECT p.id
+      FROM parts AS p
+             INNER JOIN devices AS d
+             ON p.device_id = d.id
+             where d.name = 'Gyroscope'
+     ORDER BY p.id DESC LIMIT 1 offset 1
+  ), acc AS (
+      SELECT id
+        FROM devices
+       WHERE name = 'Accelerometer'
+       LIMIT 1
+  ), gyro AS (
+      SELECT id
+        FROM devices
+       WHERE name = 'Gyroscope'
+       LIMIT 1
+  )
+      UPDATE parts
+      SET device_id = (SELECT id FROM acc)
+      WHERE id = (SELECT id FROM part1) OR
+      id = (SELECT id FROM part2);
+  commit;
+#+END_SRC
+
+#+RESULTS:
+| BEGIN    |
+|----------|
+| UPDATE 2 |
+| COMMIT   |
+
+let's see now it that fixed it
+
+#+BEGIN_SRC sql
+  SELECT p.id, d.name
+    FROM parts AS p
+           LEFT OUTER JOIN devices AS d
+               ON p.device_id = d.id;
+#+END_SRC
+
+#+RESULTS:
+| id | name          |
+|----+---------------|
+|  1 | Accelerometer |
+|  2 | Accelerometer |
+|  3 | Accelerometer |
+|  4 | Gyroscope     |
+|  5 | Gyroscope     |
+|  6 | Gyroscope     |
+|  9 |               |
+| 10 |               |
+| 13 | Accelerometer |
+| 14 | Accelerometer |
+|  7 | Accelerometer |
+|  8 | Accelerometer |
+
+Gawd, what a disaster. I don't even remember what this looked like before. I think I'll give up here.
+
+

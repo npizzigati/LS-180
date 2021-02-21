@@ -1,0 +1,50 @@
+DDL, DML and DCL
+
+* DCL is one sublanguage of SQL. What are the other two, give examples of each.
+1. DML: Data Manipulation Language. Examples: SELECT, INSERT, DELETE, UPDATE.
+2. DDL: Data Definition Language, e.g.: CREATE, DROP, ALTER.
+   
+* Does the following statement use the Data Definition Language (DDL) or the Data Manipulation Language (DML) component of SQL?
+SELECT column_name FROM my_table;
+Answer: DML
+
+* Does the following statement use the DDL or DML component of SQL?
+CREATE TABLE things (
+  id serial PRIMARY KEY,
+  item text NOT NULL UNIQUE,
+  material text NOT NULL
+);
+Answer: DDL
+
+* Does the following statement use the DDL or DML component of SQL?
+ALTER TABLE things
+DROP CONSTRAINT things_item_key;
+Answer: DDL
+
+* Does the following statement use the DDL or DML component of SQL?
+INSERT INTO things VALUES (3, 'Scissors', 'Metal');
+Answer: DML
+
+* Does the following statement use the DDL or DML component of SQL?
+UPDATE things
+SET material = 'plastic'
+WHERE item = 'Cup';
+Answer: DML
+
+* DML/DDL/DCL Part 7
+Does the following statement use the DDL, DML, or DCL component of SQL?
+\d things
+Answer: None of the above. It's a psql command.
+
+* Does the following statement use the DDL or DML component of SQL?
+DELETE FROM things WHERE item = 'Cup';
+Answer: DML
+
+* Does the following statement use the DDL or DML component of SQL?
+DROP DATABASE xyzzy;
+Answer: DDL
+
+* Does the following statement use the DDL or DML component of SQL?
+CREATE SEQUENCE part_number_sequence;
+Answer: DDL
+

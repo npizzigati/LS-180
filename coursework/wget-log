@@ -1,0 +1,12 @@
+URL transformed to HTTPS due to an HSTS policy
+--2021-02-13 09:55:04--  https://raw.githubusercontent.com/launchschool/sql_course_data/master/sql-and-relational-databases/schema-data-and-sql/group-by-and-aggregate-functions/films4.sql
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 3836 (3.7K) [text/plain]
+Saving to: ‘films4.sql’
+
+films4.sql      0%       0  --.-KB/s                   films4.sql    100%   3.75K  --.-KB/s    in 0s          
+
+2021-02-13 09:55:04 (16.3 MB/s) - ‘films4.sql’ saved [3836/3836]
+

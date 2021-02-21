@@ -1,0 +1,76 @@
+* Create an Extrasolar Planetary Database
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database extrasolar
+:END:
+** To get started, first create a postgresql database named "extrasolar", and then create two tables in the database as follows:
+
+stars table
+
+id: a unique serial number that auto-increments and serves as a primary key for this table.
+name: the name of the star,e,g., "Alpha Centauri A". Allow room for 25 characters. Must be unique and non-null.
+distance: the distance in light years from Earth. Define this as a whole number (e.g., 1, 2, 3, etc) that must be non-null and greater than 0.
+spectral_type: the spectral type of the star: O, B, A, F, G, K, and M. Use a one character string.
+companions: how many companion stars does the star have? A whole number will do. Must be non-null and non-negative.
+
+
+#+BEGIN_SRC sql
+  CREATE TABLE stars(
+    id serial PRIMARY KEY,
+    distance int NOT NULL,
+    spectral_type char,
+    companions int NOT NULL
+    CHECK(distance >= 0)
+    CHECK(companions >= 0));
+
+#+END_SRC
+
+#+RESULTS:
+| CREATE TABLE |
+|--------------|
+** planets table
+
+id: a unique serial number that auto-increments and serves as a primary key for this table.
+designation: a single alphabetic character that uniquely identifies the planet in its star system ('a', 'b', 'c', etc.)
+mass: estimated mass in terms of Jupiter masses; use an integer for this value.
+
+#+BEGIN_SRC sql
+  CREATE TABLE planets(
+    id serial PRIMARY KEY,
+    designation char,
+    mass int);
+
+#+END_SRC
+
+#+RESULTS:
+| CREATE TABLE |
+|--------------|
+** Fix constraint in stars so that distance may not be zero, only 1 or higher
+
+#+BEGIN_SRC sql
+  ALTER TABLE stars
+    DROP CONSTRAINT stars_distance_check,
+    add constraint stars_distance_check CHECK (distance > 0);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+** Fix spectral_type in stars so that only one character can be entered
+#+BEGIN_SRC sql
+  ALTER TABLE stars
+    ALTER COLUMN spectral_type TYPE char(1);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+** Fix designation in planets so that only one character can be entered
+#+BEGIN_SRC sql
+  ALTER TABLE planets
+    ALTER COLUMN designation TYPE char(1);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+

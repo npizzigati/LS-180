@@ -1,0 +1,48 @@
+* Insert data for parts and devices
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database workshop
+:END:
+** Add in two different devices. One should be named, "Accelerometer". The other should be named, "Gyroscope".
+
+The first device should have 3 parts (this is grossly simplified). The second device should have 5 parts. The part numbers may be any number between 1 and 10000. There should also be 3 parts that don't belong to any device yet.
+
+#+BEGIN_SRC sql
+  INSERT INTO devices (name)
+  VALUES
+    ('Accelerometer'),
+    ('Gyroscope');
+  WITH acc AS (SELECT id
+                 FROM devices
+                WHERE name = 'Accelerometer'),
+    gyro AS (SELECT id
+               FROM devices
+              WHERE name = 'Gyroscope')
+      INSERT INTO parts (part_number, device_id)
+      VALUES
+      (1, (SELECT id FROM acc)),
+      (2, (SELECT id FROM acc)),
+      (3, (SELECT id FROM acc)),
+      (4, (SELECT id FROM gyro)),
+      (5, (SELECT id FROM gyro)),
+      (6, (SELECT id FROM gyro)),
+      (7, (SELECT id FROM gyro)),
+      (8, (SELECT id FROM gyro));
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 2 |
+|------------|
+| INSERT 0 8 |
+** Forgot to add the three parts that don't belong to anything yet
+
+#+BEGIN_SRC sql
+  INSERT INTO parts(part_number)
+  VALUES
+    (9),
+    (10),
+    (11);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 3 |
+|------------|

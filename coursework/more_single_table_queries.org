@@ -1,0 +1,105 @@
+* More single table queries
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database residents
+:END:
+** Create a new database called residents using the PostgreSQL command line tools.
+$ createdb residents
+** Load this file into the database created in #1.
+$ psql -d residents < residents_with_data.sql
+** Write a SQL query to list the ten states with the most rows in the people table in descending order.
+
+#+BEGIN_SRC sql
+    SELECT state, COUNT(state) AS instances FROM people
+    GROUP BY state
+    ORDER BY instances DESC
+    LIMIT 10;
+#+END_SRC
+
+#+RESULTS:
+| state | instances |
+|-------+-----------|
+| CA    |      1064 |
+| TX    |       734 |
+| NY    |       596 |
+| FL    |       528 |
+| IL    |       464 |
+| PA    |       445 |
+| OH    |       372 |
+| MI    |       372 |
+| GA    |       306 |
+| NJ    |       303 |
+** Write a SQL query that lists each domain used in an email address in the people table and how many people in the database have an email address containing that domain. Domains should be listed with the most popular first.
+
+#+BEGIN_SRC sql
+    SELECT SUBSTRING(email, strpos(email, '@') + 1) AS domain,
+    COUNT(email) 
+    FROM people 
+    GROUP BY domain
+    ORDER BY COUNT desc
+#+END_SRC
+
+#+RESULTS:
+| domain         | count |
+|----------------+-------|
+| cuvox.de       |  1036 |
+| gustr.com      |  1029 |
+| rhyta.com      |  1024 |
+| superrito.com  |  1018 |
+| armyspy.com    |  1006 |
+| jourrapide.com |  1000 |
+| teleworm.us    |   998 |
+| dayrep.com     |   966 |
+| einrot.com     |   965 |
+| fleckens.hu    |   958 |
+** Write a SQL statement that will delete the person with ID 3399 from the people table.
+
+
+#+BEGIN_SRC sql
+    DELETE FROM people
+    WHERE id = 3399
+#+END_SRC
+
+#+RESULTS:
+| DELETE 0 |
+|----------|
+** Write a SQL statement that will delete all users that are located in the state of California (CA).
+
+
+#+BEGIN_SRC sql
+  DELETE
+  FROM people
+  WHERE state = 'CA';
+#+END_SRC
+
+#+RESULTS:
+| DELETE 1064 |
+|-------------|
+** Write a SQL statement that will update the given_name values to be all uppercase for all users with an email address that contains teleworm.us.
+
+#+BEGIN_SRC sql
+  BEGIN;
+  UPDATE people
+  SET given_name = UPPER(given_name)
+  WHERE email LIKE '%teleworm.us%';
+  commit;
+#+END_SRC
+
+#+RESULTS:
+| BEGIN      |
+|------------|
+| UPDATE 889 |
+| COMMIT     |
+** Write a SQL statement that will delete all rows from the people table.
+
+
+#+BEGIN_SRC sql
+  BEGIN;
+  DELETE FROM people;
+  commit;
+#+END_SRC
+
+#+RESULTS:
+| BEGIN    |
+|----------|
+| DELETE 0 |
+| COMMIT   |

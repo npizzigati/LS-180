@@ -1,0 +1,38 @@
+* Get services with no customers
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database billing
+:END:
+
+Using RIGHT OUTER JOIN, write a query to display a list of all services that are not currently in use. Your output should look like this:
+
+Copy Code
+ description
+-------------
+ One-to-one Training
+
+#+BEGIN_SRC sql
+  SELECT s.description
+    FROM services AS s
+           LEFT JOIN customers_services AS cs
+               ON s.id = cs.service_id
+  WHERE cs.customer_id IS NULL;
+
+
+
+#+END_SRC
+
+now try using right join
+
+#+BEGIN_SRC sql
+  SELECT s.description
+    FROM customers_services AS cs
+           RIGHT JOIN services AS s
+               ON cs.service_id = s.id
+           WHERE cs.customer_id IS NULL;
+
+
+#+END_SRC
+#+RESULTS:
+| description         |
+|---------------------|
+| One-to-one Training |

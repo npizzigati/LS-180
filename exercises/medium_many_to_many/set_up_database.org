@@ -1,0 +1,224 @@
+* Set up database
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database billing
+:END:
+
+** The customers table should include the following columns:
+
+id is a unique numeric customer id that auto-increments and serves as a primary key for this table.
+name is the customer's name. This value must be present in every record and may contain names of any length.
+payment_token is an 8-character string that consists of solely uppercase alphabetic letters. It identifies each customer's payment information with the payment processor the company uses.
+
+#+BEGIN_SRC sql
+  CREATE TABLE customers(
+    id serial PRIMARY KEY,
+    name text NOT NULL,
+    payment_token char(8)
+    CHECK(payment_token ~ '^[A-Z]{8}$'));
+
+#+END_SRC
+
+#+RESULTS:
+| CREATE TABLE |
+|--------------|
+
+check to see if payment token constraint worked
+
+#+BEGIN_SRC sql
+  INSERT INTO customers (name, payment_token)
+  VALUES
+    ('test', 'ABCdEFDH');
+
+#+END_SRC
+
+#+RESULTS:
+|---|
+
+An error is produced, as expected.
+
+The services table should include the following columns:
+
+id is a unique numeric service id that auto-increments and serves as a primary key for this table.
+description is the service description. This value must be present and may contain any text.
+price is the annual service price. It must be present, must be greater than or equal to 0.00. The data type is numeric(10, 2).
+
+#+BEGIN_SRC sql
+  CREATE TABLE services(
+    id serial PRIMARY KEY,
+    description text NOT NULL,
+    price NUMERIC(10, 2) NOT NULL);
+
+#+END_SRC
+
+#+RESULTS:
+| CREATE TABLE |
+|--------------|
+
+** Once you've created these tables, here is some data that you can enter into them (feel free to enter some data of your own as well):
+
+Copy Code
+-- Data for the customers table
+
+id | name          | payment_token
+--------------------------------
+1  | Pat Johnson   | XHGOAHEQ
+2  | Nancy Monreal | JKWQPJKL
+3  | Lynn Blake    | KLZXWEEE
+4  | Chen Ke-Hua   | KWETYCVX
+5  | Scott Lakso   | UUEAPQPS
+6  | Jim Pornot    | XKJEYAZA
+
+#+BEGIN_SRC sql
+  INSERT INTO customers (name, payment_token)
+  VALUES
+    ('Pat Johnson', 'XHGOAHEQ'),
+    ('Nancy Monreal', 'JKWQPJKL'),
+    ('Lynnn Blake', 'KLZXWEEE'),
+    ('Chen Ke-Hua', 'KWETYCVX'),
+    ('Scott Lakso', 'UUEAPQPS'),
+    ('Jim Pornot', 'XKJEYAZA');
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 6 |
+|------------|
+
+-- Data for the services table
+
+id | description         | price
+---------------------------------
+1  | Unix Hosting        | 5.95
+2  | DNS                 | 4.95
+3  | Whois Registration  | 1.95
+4  | High Bandwidth      | 15.00
+5  | Business Support    | 250.00
+6  | Dedicated Hosting   | 50.00
+7  | Bulk Email          | 250.00
+8  | One-to-one Training | 999.00
+
+#+BEGIN_SRC sql
+  INSERT INTO services (description, price)
+  VALUES
+    ('Unix Hosting', 5.95),
+    ('DNS', 4.95),
+    ('Whois Registration', 1.95),
+    ('High Bandwidth', 250.00),
+    ('Dedicated Hosting', 50.00),
+    ('Bulk Email', 250.00),
+    ('One-to-one Training', 999.00);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 7 |
+|------------|
+Make correction to above entry
+
+#+BEGIN_SRC sql
+  BEGIN;
+  INSERT INTO services (description, price)
+  VALUES
+    ('Business Support', 250.00);
+  UPDATE services
+         SET price = 15.00
+   WHERE description = 'High Bandwidth';
+  COMMIT;  
+#+END_SRC
+
+#+RESULTS:
+| BEGIN      |
+|------------|
+| INSERT 0 1 |
+| UPDATE 1   |
+| COMMIT     |
+check table contents
+
+#+BEGIN_SRC sql
+  SELECT *
+    FROM services
+   ORDER BY id;
+
+#+END_SRC
+
+#+RESULTS:
+| id | description         |  price |
+|----+---------------------+--------|
+|  1 | Unix Hosting        |   5.95 |
+|  2 | DNS                 |   4.95 |
+|  3 | Whois Registration  |   1.95 |
+|  4 | High Bandwidth      |  15.00 |
+|  5 | Dedicated Hosting   |  50.00 |
+|  6 | Bulk Email          | 250.00 |
+|  7 | One-to-one Training | 999.00 |
+| 10 | Business Support    | 250.00 |
+create a join table that associates customers with services and vice versa. The join table should have columns for both the services id and the customers id, as well as a primary key named id that auto-increments.
+#+BEGIN_SRC sql
+  CREATE TABLE customers_services(
+    id serial PRIMARY KEY,
+    customer_id integer REFERENCES customers(id) ON DELETE cascade,
+    service_id integer REFERENCES services(id));
+#+END_SRC
+
+#+BEGIN_SRC sql
+    ALTER TABLE customers_services
+      ADD UNIQUE(customer_id, service_id);
+#+END_SRC
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+Enter some data in the join table that shows which services each customer uses as follows:
+
+Pat Johnson uses Unix Hosting, DNS, and Whois Registration
+Nancy Monreal doesn't have any active services
+Lynn Blake uses Unix Hosting, DNS, Whois Registration, High Bandwidth, and Business Support
+Chen Ke-Hua uses Unix Hosting and High Bandwidth
+Scott Lakso uses Unix Hosting, DNS, and Dedicated Hosting
+Jim Pornot uses Unix Hosting, Dedicated Hosting, and Bulk Email
+
+#+BEGIN_SRC sql
+  INSERT INTO customers_services (customer_id, service_id)
+  VALUES
+    (2, 1),
+    (2, 2),
+    (2, 3),
+    (4, 1),
+    (4, 2),
+    (4, 3),
+    (4, 4),
+    (4, 10),
+    (5, 1),
+    (5, 4),
+    (6, 1),
+    (6, 2),
+    (6, 5),
+    (7, 1),
+    (7, 5),
+    (7, 6);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 16 |
+|-------------|
+
+check data
+
+#+BEGIN_SRC sql
+  SELECT c.id, c.name, string_agg(s.description, ', ')
+    FROM customers AS c
+           LEFT OUTER JOIN customers_services AS cs
+               ON c.id = cs.customer_id
+           LEFT OUTER JOIN services AS s
+           ON cs.service_id = s.id
+   GROUP BY c.id
+   ORDER BY c.id;
+
+#+END_SRC
+
+#+RESULTS:
+| id | name          | string_agg                                                              |
+|----+---------------+-------------------------------------------------------------------------|
+|  2 | Pat Johnson   | Unix Hosting, DNS, Whois Registration                                   |
+|  3 | Nancy Monreal |                                                                         |
+|  4 | Lynnn Blake   | DNS, Whois Registration, High Bandwidth, Business Support, Unix Hosting |
+|  5 | Chen Ke-Hua   | High Bandwidth, Unix Hosting                                            |
+|  6 | Scott Lakso   | DNS, Dedicated Hosting, Unix Hosting                                    |
+|  7 | Jim Pornot    | Unix Hosting, Dedicated Hosting, Bulk Email                             |

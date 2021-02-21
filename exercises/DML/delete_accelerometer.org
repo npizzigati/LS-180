@@ -1,0 +1,45 @@
+* Delete accelerometer
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database workshop
+:END:
+** Our workshop has decided to not make an Accelerometer after all. Delete any data related to "Accelerometer", this includes the parts associated with an Accelerometer.
+
+Okay... so what happens if I just delete the accelerometer from the devices table
+
+#+BEGIN_SRC sql
+  DELETE FROM devices
+   WHERE name = 'Accelerometer';
+#+END_SRC
+
+#+RESULTS:
+|---|
+
+Okay, error about key still being referenced from parts table.
+
+So either I need to delete the parts referenced first, or maybe I can change the devices schema to add on delete cascade
+
+#+BEGIN_SRC sql
+  BEGIN;
+  ALTER TABLE parts
+    DROP CONSTRAINT parts_device_id_fkey,
+    ADD FOREIGN KEY (device_id) REFERENCES devices(id) on delete cascade;
+  commit;
+#+END_SRC
+
+#+RESULTS:
+| BEGIN       |
+|-------------|
+| ALTER TABLE |
+| COMMIT      |
+** Okay, let's try again now
+
+#+BEGIN_SRC sql
+  DELETE FROM devices
+              WHERE name = 'Accelerometer';
+#+END_SRC
+
+#+RESULTS:
+| DELETE 1 |
+|----------|
+
+Well alright. Seems like that worked.

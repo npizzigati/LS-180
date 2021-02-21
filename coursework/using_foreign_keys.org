@@ -1,0 +1,177 @@
+* Using Foreign Keys
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database using_foreign_keys
+:END:
+* Update the orders table so that referential integrity will be preserved for the data between orders and products.
+
+#+BEGIN_SRC sql
+  ALTER TABLE orders
+    ADD FOREIGN KEY (product_id) REFERENCES products(id);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+* Use psql to insert the data shown in the following table into the database:
+
+
+#+BEGIN_SRC sql
+  BEGIN;
+  INSERT INTO products (name)
+  VALUES
+    ('small bolt'),
+    ('large bolt');
+  WITH small_bolt AS (
+    SELECT id
+      FROM products
+     WHERE name = 'small bolt'
+  ), large_bolt AS (
+    SELECT id
+      FROM products
+     WHERE name = 'large bolt'
+  )
+  INSERT INTO orders (product_id, quantity)
+  VALUES
+    ((SELECT id FROM small_bolt), 10),
+    ((SELECT id FROM small_bolt), 25),
+    ((SELECT id FROM large_bolt), 15);
+  COMMIT;
+
+
+
+#+END_SRC
+
+#+RESULTS:
+| BEGIN      |
+|------------|
+| INSERT 0 2 |
+| INSERT 0 3 |
+| COMMIT     |
+* To query the above data
+
+#+BEGIN_SRC sql
+  SELECT o.quantity, p.name
+    FROM orders AS o
+           INNER JOIN products AS p
+           ON o.product_id = p.id;
+#+END_SRC
+
+#+RESULTS:
+| quantity | name       |
+|----------+------------|
+|       10 | small bolt |
+|       25 | small bolt |
+|       15 | large bolt |
+* Can you insert a row into orders without a product_id? Write a SQL statement to prove your answer.
+
+I don't think so. I would think the primary key constraint in products coupled with the related foreign key in orders would prevent us from doing that. A test:
+
+
+#+BEGIN_SRC sql
+  INSERT INTO orders (quantity)
+  VALUES
+    (1);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 1 |
+|------------|
+
+Whoa, I'm surprised -- you can do the insertion.
+* Write a SQL statement that will prevent NULL values from being stored in orders.product_id. What happens if you execute that statement?
+
+
+#+BEGIN_SRC sql
+  ALTER TABLE orders
+    ALTER COLUMN product_id SET NOT NULL;
+#+END_SRC
+
+#+RESULTS:
+|---|
+
+This produces the error:
+psql:/tmp/babel-1NOn7G/sql-in-gd5Sot:2: ERROR:  column "product_id" contains null values
+* Make any changes needed to avoid the error message encountered in #6.
+
+
+#+BEGIN_SRC sql
+  BEGIN;
+  DELETE FROM orders
+   WHERE product_id IS NULL;
+  COMMIT;
+#+END_SRC
+
+#+RESULTS:
+| BEGIN    |
+|----------|
+| DELETE 1 |
+| COMMIT   |
+
+now run the prior statement again:
+
+#+BEGIN_SRC sql
+  ALTER TABLE orders
+    ALTER COLUMN product_id SET NOT NULL;
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+* Create a new table called reviews to store the data shown below. This table should include a primary key and a reference to the products table.
+
+
+#+BEGIN_SRC sql
+   CREATE TABLE reviews(
+     id serial PRIMARY KEY,
+     content text NOT NULL,
+     product_id integer not null,
+     FOREIGN KEY (product_id) REFERENCES products(id));
+
+#+END_SRC
+
+#+RESULTS:
+| CREATE TABLE |
+|--------------|
+* Write SQL statements to insert the data shown in the table in #8.
+
+
+#+BEGIN_SRC sql
+  WITH small_bolt AS (
+    SELECT id
+      FROM products
+     WHERE name = 'small bolt'
+  ),
+    large_bolt AS (
+      SELECT id
+        FROM products
+       WHERE name = 'large bolt'
+    )
+  INSERT INTO reviews (product_id, content)
+  VALUES ((SELECT id FROM small_bolt), 'a little small'),
+         ((SELECT id FROM small_bolt), 'very round'),
+         ((SELECT id FROM large_bolt), 'could have been smaller');
+    
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 3 |
+|------------|
+
+check contents
+
+#+BEGIN_SRC sql
+  SELECT p.name AS Product,
+         r.content AS Review
+    FROM products AS p
+           INNER JOIN reviews AS r
+               ON p.id = r.product_id
+   WHERE p.name = 'small bolt' OR
+         p.name = 'large bolt';
+#+END_SRC
+
+#+RESULTS:
+| product    | review                  |
+|------------+-------------------------|
+| small bolt | a little small          |
+| small bolt | very round              |
+| large bolt | could have been smaller |

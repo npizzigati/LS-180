@@ -1,0 +1,219 @@
+* Many to many
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database many_to_many
+:END:
+** Write a SQL statement that will return the following result:
+
+Copy Code
+ id |     author      |           categories
+----+-----------------+--------------------------------
+  1 | Charles Dickens | Fiction, Classics
+  2 | J. K. Rowling   | Fiction, Fantasy
+  3 | Walter Isaacson | Nonfiction, Biography, Physics
+(3 rows)
+
+#+BEGIN_SRC sql
+  SELECT b.id, b.author, string_agg(c.name, ', ') AS categories
+    FROM books AS b
+           INNER JOIN books_categories AS bc
+           ON bc.book_id = b.id
+           INNER JOIN categories AS c
+           ON c.id = bc.category_id
+  GROUP BY b.id
+  ORDER BY b.id;
+
+#+END_SRC
+
+#+RESULTS:
+| id | author          | categories                     |
+|----+-----------------+--------------------------------|
+|  1 | Charles Dickens | Fiction, Classics              |
+|  2 | J. K. Rowling   | Fiction, Fantasy               |
+|  3 | Walter Isaacson | Nonfiction, Biography, Physics |
+** Write SQL statements to insert the following new books into the database. What do you need to do to ensure this data fits in the database?
+
+| Author                        | Title                                      | Categories                               |
+| Lynn Sherr                    | Sally Ride: America's First Woman in Space | Biography, Nonfiction, Space Exploration |
+| Charlotte Brontë              | Jane Eyre                                  | Fiction, Classics                        |
+| Meeru Dhalwala and Vikram Vij | Vij's: Elegant and Inspired Indian Cuisine | Cookbook, Nonfiction, South Asia         |
+
+Need to increase the size of the title varchar type
+
+#+BEGIN_SRC sql
+  ALTER TABLE books
+    ALTER title TYPE varchar(200);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+
+Now the data should fit
+
+First, create the book entries
+#+BEGIN_SRC sql
+  INSERT INTO books (author, title)
+  VALUES
+    ('Lynn Sherr', 'Sally Ride: America''s First Woman in Space'),
+    ('Charlote Bronte', 'Jane Eyre'),
+    ('Meeru Dhalwala and Vikram Vij', 'Vij''s: Elegant and Inspired Indian Cuisine');
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 3 |
+|------------|
+Now look at the book ids and category ids, in order to make the appropriate entries in books_categories
+
+#+BEGIN_SRC sql
+  select * from books;
+#+END_SRC
+
+#+RESULTS:
+| id | title                                      | author                        |
+|----+--------------------------------------------+-------------------------------|
+|  1 | A Tale of Two Cities                       | Charles Dickens               |
+|  2 | Harry Potter                               | J. K. Rowling                 |
+|  3 | Einstein: His Life and Universe            | Walter Isaacson               |
+|  4 | Sally Ride: America's First Woman in Space | Lynn Sherr                    |
+|  5 | Jane Eyre                                  | Charlote Bronte               |
+|  6 | Vij's: Elegant and Inspired Indian Cuisine | Meeru Dhalwala and Vikram Vij |
+
+#+BEGIN_SRC sql
+select * from categories;
+#+END_SRC
+
+#+RESULTS:
+| id | name       |
+|----+------------|
+|  1 | Nonfiction |
+|  2 | Fiction    |
+|  3 | Fantasy    |
+|  4 | Classics   |
+|  5 | Biography  |
+|  6 | Physics    |
+
+Add missing categories to categories table
+
+#+BEGIN_SRC sql
+  INSERT INTO categories (name)
+  VALUES
+    ('Space Exploration'),
+    ('Cookbook'),
+    ('South Asia');
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 3 |
+|------------|
+
+Take another gander at categories
+
+#+BEGIN_SRC sql
+  SELECT * FROM categories;
+#+END_SRC
+
+#+RESULTS:
+| id | name              |
+|----+-------------------|
+|  1 | Nonfiction        |
+|  2 | Fiction           |
+|  3 | Fantasy           |
+|  4 | Classics          |
+|  5 | Biography         |
+|  6 | Physics           |
+|  7 | Space Exploration |
+|  8 | Cookbook          |
+|  9 | South Asia        |
+
+Finally, make the entries in books_categories
+
+#+BEGIN_SRC sql
+  INSERT INTO books_categories (book_id, category_id)
+  VALUES
+    (4, 5),
+    (4, 1),
+    (4, 7),
+    (5, 2),
+    (5, 4),
+    (6, 8),
+    (6, 1),
+    (6, 9);
+
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 8 |
+|------------|
+Perform query to make sure everything worked
+
+#+BEGIN_SRC sql
+  SELECT b.author AS Author, b.title AS Title, string_agg(c.name, ', ') AS Categories
+    FROM books AS b
+           INNER JOIN books_categories AS bc
+               ON b.id = bc.book_id
+           INNER JOIN categories AS c
+           ON c.id = bc.category_id
+  GROUP BY b.author, b.title;
+
+
+#+END_SRC
+
+#+RESULTS:
+| author                        | title                                      | categories                               |
+|-------------------------------+--------------------------------------------+------------------------------------------|
+| Walter Isaacson               | Einstein: His Life and Universe            | Nonfiction, Biography, Physics           |
+| Meeru Dhalwala and Vikram Vij | Vij's: Elegant and Inspired Indian Cuisine | Cookbook, Nonfiction, South Asia         |
+| J. K. Rowling                 | Harry Potter                               | Fiction, Fantasy                         |
+| Charlote Bronte               | Jane Eyre                                  | Fiction, Classics                        |
+| Lynn Sherr                    | Sally Ride: America's First Woman in Space | Biography, Nonfiction, Space Exploration |
+| Charles Dickens               | A Tale of Two Cities                       | Fiction, Classics                        |
+** Write a SQL statement to add a uniqueness constraint on the combination of columns book_id and category_id of the books_categories table. This constraint should be a table constraint; so, it should check for uniqueness on the combination of book_id and category_id across all rows of the books_categories table.
+
+#+BEGIN_SRC sql
+  ALTER TABLE books_categories
+    ADD UNIQUE (book_id, category_id);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+Write a SQL statement that will return the following result:
+
+      name        | book_count |                                 book_titles
+------------------+------------+-----------------------------------------------------------------------------
+Biography         |          2 | Einstein: His Life and Universe, Sally Ride: America's First Woman in Space
+Classics          |          2 | A Tale of Two Cities, Jane Eyre
+Cookbook          |          1 | Vij's: Elegant and Inspired Indian Cuisine
+Fantasy           |          1 | Harry Potter
+Fiction           |          3 | Jane Eyre, Harry Potter, A Tale of Two Cities
+Nonfiction        |          3 | Sally Ride: America's First Woman in Space, Einstein: His Life and Universe, Vij's: Elegant and Inspired Indian Cuisine
+Physics           |          1 | Einstein: His Life and Universe
+South Asia        |          1 | Vij's: Elegant and Inspired Indian Cuisine
+Space Exploration |          1 | Sally Ride: America's First Woman in Space
+
+#+BEGIN_SRC sql
+  SELECT c.name, COUNT(b.id) AS book_count,
+         string_agg(b.title, ', ') AS book_titles
+    FROM categories AS c
+           INNER JOIN books_categories AS bc
+               ON c.id = bc.category_id
+           INNER JOIN books AS b
+               ON bc.book_id = b.id
+   GROUP BY name
+   ORDER BY name;
+
+#+END_SRC
+
+#+RESULTS:
+| name              | book_count | book_titles                                                                                                             |
+|-------------------+------------+-------------------------------------------------------------------------------------------------------------------------|
+| Biography         |          2 | Einstein: His Life and Universe, Sally Ride: America's First Woman in Space                                             |
+| Classics          |          2 | A Tale of Two Cities, Jane Eyre                                                                                         |
+| Cookbook          |          1 | Vij's: Elegant and Inspired Indian Cuisine                                                                              |
+| Fantasy           |          1 | Harry Potter                                                                                                            |
+| Fiction           |          3 | A Tale of Two Cities, Harry Potter, Jane Eyre                                                                           |
+| Nonfiction        |          3 | Einstein: His Life and Universe, Sally Ride: America's First Woman in Space, Vij's: Elegant and Inspired Indian Cuisine |
+| Physics           |          1 | Einstein: His Life and Universe                                                                                         |
+| South Asia        |          1 | Vij's: Elegant and Inspired Indian Cuisine                                                                              |
+| Space Exploration |          1 | Sally Ride: America's First Woman in Space                                                                              |
+

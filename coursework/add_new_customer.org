@@ -1,0 +1,50 @@
+* Add new customer
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database billing
+:END:
+Add New Customer
+A new customer, 'John Doe', has signed up with our company. His payment token is 'EYODHLCN'. Initially, he has signed up for UNIX hosting, DNS, and Whois Registration. Create any SQL statement(s) needed to add this record to the database.
+#+BEGIN_SRC sql
+  BEGIN;
+  INSERT INTO customers (name, payment_token)
+  VALUES
+    ('John Doe', 'EYODHLCN');
+  WITH JohnDoe AS
+      (
+        SELECT id
+           FROM customers
+          WHERE name = 'John Doe'
+      )
+  INSERT INTO customers_services (customer_id, service_id)
+  VALUES
+    ((SELECT id FROM JohnDoe), 1),
+    ((SELECT id FROM JohnDoe), 2),
+    ((SELECT id FROM JohnDoe), 3);
+  COMMIT;
+#+END_SRC
+
+#+RESULTS:
+| BEGIN      |
+|------------|
+| INSERT 0 1 |
+| INSERT 0 3 |
+| COMMIT     |
+
+check to see that insertion was successful:
+
+#+BEGIN_SRC sql
+  SELECT c.name, string_agg(s.description, ', ') AS services
+    FROM customers c
+           JOIN customers_services cs
+               ON c.id = cs.customer_id
+           JOIN services s
+               ON cs.service_id = s.id
+           WHERE c.name = 'John Doe'
+  GROUP BY c.id;
+
+#+END_SRC
+
+#+RESULTS:
+| name     | services                              |
+|----------+---------------------------------------|
+| John Doe | Unix Hosting, DNS, Whois Registration |

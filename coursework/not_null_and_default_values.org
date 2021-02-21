@@ -1,0 +1,233 @@
+* NOT NULL and Default Values
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database null_and_defaults
+:END:
+** Create employees table
+
+#+BEGIN_SRC sql
+  CREATE TABLE employees (
+      first_name character varying(100),
+      last_name character varying(100),
+      department character varying(100),
+      vacation_remaining integer
+  );
+#+END_SRC
+
+#+RESULTS:
+| CREATE TABLE |
+|--------------|
+** Populate employees table
+
+#+BEGIN_SRC sql
+  INSERT INTO employees VALUES ('Leonardo', 'Ferreira', 'finance', 14);
+  INSERT INTO employees VALUES ('Sara', 'Mikaelsen', 'operations', 14);
+  INSERT INTO employees VALUES ('Lian', 'Ma', 'marketing', 13);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 1 |
+|------------|
+| INSERT 0 1 |
+| INSERT 0 1 |
+
+
+#+BEGIN_SRC sql
+  INSERT INTO employees (first_name, last_name) VALUES ('Haiden', 'Smith');
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 1 |
+|------------|
+
+** Show all rows
+
+#+BEGIN_SRC sql
+  SELECT * FROM employees;
+#+END_SRC
+
+#+RESULTS:
+| first_name | last_name | department | vacation_remaining |
+|------------+-----------+------------+--------------------|
+| Leonardo   | Ferreira  | finance    |                 14 |
+| Sara       | Mikaelsen | operations |                 14 |
+| Lian       | Ma        | marketing  |                 13 |
+| Haiden     | Smith     | unassigned |                    |
+
+** Set the default value of column department to "unassigned".
+
+#+BEGIN_SRC sql
+  ALTER TABLE employees
+  ALTER COLUMN department
+  SET DEFAULT 'unassigned';
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+
+Then set the value of the department column to "unassigned" for any rows where it has a NULL value.
+
+
+#+BEGIN_SRC sql
+  BEGIN;
+  UPDATE employees
+  SET department = 'unassigned'
+  WHERE department IS NULL;
+  commit;
+#+END_SRC
+
+#+RESULTS:
+| BEGIN    |
+|----------|
+| UPDATE 1 |
+| COMMIT   |
+
+Finally, add a NOT NULL constraint to the department column.
+
+#+BEGIN_SRC sql
+  ALTER table employees
+  ALTER COLUMN department
+  SET NOT NULL;
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+
+** Write the SQL statement to create a table called temperatures to hold the following data:
+
+#+BEGIN_SRC sql
+    CREATE TABLE temperatures(
+    "date" date NOT NULL,
+    low integer NOT NULL,
+    high integer NOT NULL);
+#+END_SRC
+
+#+RESULTS:
+| CREATE TABLE |
+|--------------|
+
+** Write the SQL statements needed to insert the data shown in #3 into the temperatures table.
+
+
+#+BEGIN_SRC sql
+    INSERT INTO temperatures (date, low, high)
+    VALUES
+    ('2016-03-01', 34, 43),
+    ('2016-03-02', 32, 44),
+    ('2016-03-03', 31, 47),
+    ('2016-03-04', 33, 42),
+    ('2016-03-05', 39, 46),
+    ('2016-03-06', 32, 43),
+    ('2016-03-07', 29, 32),
+    ('2016-03-08', 23, 31),
+    ('2016-03-09', 17, 28);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 9 |
+|------------|
+
+** Write a SQL statement to determine the average (mean) temperature -- divide the sum of the high and low temperatures by two) for each day from March 2, 2016 through March 8, 2016. Make sure to round each average value to one decimal place.
+
+
+#+BEGIN_SRC sql
+  SELECT date,
+  round((high + low) / 2.0, 1) AS average
+  FROM temperatures
+  WHERE date > '2016-03-01'
+  AND date < '2016-03-09'
+#+END_SRC
+
+#+RESULTS:
+|       date | average |
+|------------+---------|
+| 2016-03-02 |    38.0 |
+| 2016-03-03 |    39.0 |
+| 2016-03-04 |    37.5 |
+| 2016-03-05 |    42.5 |
+| 2016-03-06 |    37.5 |
+| 2016-03-07 |    30.5 |
+| 2016-03-08 |    27.0 |
+
+** Write a SQL statement to add a new column, rainfall, to the temperatures table. It should store millimeters of rain as integers and have a default value of 0.
+
+
+#+BEGIN_SRC sql
+    ALTER TABLE temperatures
+    ADD COLUMN rainfall int DEFAULT 0;
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+
+** Each day, it rains one millimeter for every degree the average temperature goes above 35. Write a SQL statement to update the data in the table temperatures to reflect this.
+
+
+#+BEGIN_SRC sql
+  UPDATE temperatures
+  SET rainfall = ((high + low) / 2) - 35
+  WHERE ((high + low) / 2.0) > 35;
+#+END_SRC
+
+#+RESULTS:
+| UPDATE 6 |
+|----------|
+
+
+#+BEGIN_SRC sql
+  SELECT * FROM temperatures;
+#+END_SRC
+
+#+RESULTS:
+|       date | low | high | rainfall |
+|------------+-----+------+----------|
+| 2016-03-07 |  29 |   32 |          |
+| 2016-03-08 |  23 |   31 |          |
+| 2016-03-09 |  17 |   28 |          |
+| 2016-03-01 |  34 |   43 |    0.118 |
+| 2016-03-02 |  32 |   44 |    0.118 |
+| 2016-03-03 |  31 |   47 |    0.157 |
+| 2016-03-04 |  33 |   42 |    0.079 |
+| 2016-03-05 |  39 |   46 |    0.276 |
+| 2016-03-06 |  32 |   43 |    0.079 |
+
+** A decision has been made to store rainfall data in inches. Write the SQL statements required to modify the rainfall column to reflect these new requirements.
+
+
+#+BEGIN_SRC sql
+  ALTER table temperatures
+  DROP COLUMN rainfall,
+  ADD COLUMN rainfall decimal(4, 3);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+
+
+#+BEGIN_SRC sql
+  UPDATE temperatures
+  SET rainfall = (((high + low) / 2) - 35) / 25.4
+  WHERE ((high+low)/2) > 35;
+#+END_SRC
+
+#+RESULTS:
+| UPDATE 6 |
+|----------|
+
+** Write a SQL statement that renames the temperatures table to weather.
+
+
+#+BEGIN_SRC sql
+    ALTER TABLE temperatures
+    rename TO weather;
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+
+
+

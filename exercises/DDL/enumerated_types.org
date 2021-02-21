@@ -1,0 +1,22 @@
+* Enumerated Types
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database extrasolar
+:END:
+** Modify the stars table to remove the CHECK constraint on the spectral_type column, and then modify the spectral_type column so it becomes an enumerated type that restricts it to one of the following 7 values: 'O', 'B', 'A', 'F', 'G', 'K', and 'M'.
+#+BEGIN_SRC sql
+  CREATE TYPE spectral AS enum ('O', 'B', 'A', 'F', 'G', 'K', 'M');
+#+END_SRC
+
+#+RESULTS:
+| CREATE TYPE |
+|-------------|
+
+#+BEGIN_SRC sql
+  ALTER TABLE stars
+    ALTER spectral_type TYPE spectral
+  USING spectral_type::spectral;
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|

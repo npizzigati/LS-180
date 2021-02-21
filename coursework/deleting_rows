@@ -1,0 +1,45 @@
+* Deleting rows
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database billing
+:END:
+Write the necessary SQL statements to delete the "Bulk Email" service and customer "Chen Ke-Hua" from the database.
+
+
+#+BEGIN_SRC sql
+  DELETE FROM customers
+   WHERE name = 'Chen Ke-Hua';
+
+#+END_SRC
+
+#+RESULTS:
+| DELETE 1 |
+|----------|
+
+#+BEGIN_SRC sql
+  DELETE FROM services
+              WHERE description = 'Bulk Email';
+#+END_SRC
+
+#+RESULTS:
+|---|
+Error message... Need to remove entry in customer_services table first
+
+#+BEGIN_SRC sql
+  DELETE FROM customers_services
+              WHERE service_id = 6;
+#+END_SRC
+
+#+RESULTS:
+| DELETE 1 |
+|----------|
+
+Now repeat above deletion attempt
+
+#+BEGIN_SRC sql
+  DELETE FROM services
+              WHERE description = 'Bulk Email';
+#+END_SRC
+
+#+RESULTS:
+| DELETE 1 |
+|----------|

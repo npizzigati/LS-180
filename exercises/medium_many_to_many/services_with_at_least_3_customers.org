@@ -1,0 +1,45 @@
+* Services with at least 3 customers
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database billing
+:END:
+Write a query that displays the description for every service that is subscribed to by at least 3 customers. Include the customer count for each description in the report. The report should look like this:
+
+ description  | count
+--------------+-------
+ DNS          |     3
+ Unix Hosting |     5
+
+#+BEGIN_SRC sql
+  SELECT s.description, count(c.id)
+    FROM services AS s
+           JOIN customers_services AS cs
+               ON s.id = cs.service_id
+           JOIN customers AS c
+               ON cs.customer_id = c.id
+           GROUP BY s.description
+           HAVING COUNT(c.id) >= 3;
+#+END_SRC
+
+#+RESULTS:
+| description  | count |
+|--------------+-------|
+| DNS          |     3 |
+| Unix Hosting |     5 |
+
+Try to produce the same query without joining the customers table
+
+#+BEGIN_SRC sql
+  SELECT s.description, COUNT(cs.customer_id)
+    FROM services AS s
+           JOIN customers_services AS cs
+               ON s.id = cs.service_id
+   GROUP BY s.description
+            HAVING COUNT(cs.customer_id) >= 3;
+         
+#+END_SRC
+
+#+RESULTS:
+| description  | count |
+|--------------+-------|
+| DNS          |     3 |
+| Unix Hosting |     5 |

@@ -1,0 +1,43 @@
+* Is Null and Is Not Null
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database workshop
+:END:
+** Write two SQL queries:
+
+One that generates a listing of parts that currently belong to a device.
+
+#+BEGIN_SRC sql
+  SELECT part_number, device_id
+    FROM parts
+   WHERE device_id IS NOT NULL;
+#+END_SRC
+
+#+RESULTS:
+| part_number | device_id |
+|-------------+-----------|
+|           1 |         1 |
+|           2 |         1 |
+|           3 |         1 |
+|           4 |         2 |
+|           5 |         2 |
+|           6 |         2 |
+|           7 |         2 |
+|           8 |         2 |
+
+One that generates a listing of parts that don't belong to a device.
+
+#+BEGIN_SRC sql
+  SELECT part_number, device_id
+    FROM parts
+   WHERE device_id IS NULL;
+
+#+END_SRC
+
+#+RESULTS:
+| part_number | device_id |
+|-------------+-----------|
+|           9 |           |
+|          10 |           |
+|          11 |           |
+
+Do not include the id column in your queries.

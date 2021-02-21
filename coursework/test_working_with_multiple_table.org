@@ -1,0 +1,105 @@
+* Test - Working with multiple tables
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database test_multiple_tables
+:END:
+
+** Truncate test tickets tables to 10 items
+
+#+BEGIN_SRC sql
+  BEGIN;
+  DELETE FROM tickets
+              WHERE id > 10;
+                    commit;
+#+END_SRC
+
+#+RESULTS:
+| BEGIN       |
+|-------------|
+| DELETE 3773 |
+| COMMIT      |
+
+** show tickets table contents
+
+#+BEGIN_SRC sql
+  SELECT * FROM tickets;
+#+END_SRC
+
+#+RESULTS:
+| id | event_id | seat_id | customer_id |
+|----+----------+---------+-------------|
+|  1 |        1 |     152 |        8528 |
+|  2 |        1 |     153 |        8528 |
+|  3 |        1 |     365 |        9571 |
+|  4 |        1 |     395 |        7662 |
+|  5 |        1 |     396 |        7662 |
+|  6 |        1 |     397 |        7662 |
+|  7 |        1 |     398 |        7662 |
+|  8 |        1 |     240 |        6979 |
+|  9 |        1 |     241 |        6979 |
+| 10 |        1 |     411 |        5456 |
+
+
+** delete customers other than those connected to tickets from customers table
+
+#+BEGIN_SRC sql
+  BEGIN;
+  DELETE FROM customers
+   WHERE id
+     NOT IN (
+       SELECT customer_id FROM tickets 
+     )
+     AND
+         id NOT BETWEEN 1 AND 10;
+  commit;
+
+#+END_SRC
+
+#+RESULTS:
+| BEGIN       |
+|-------------|
+| DELETE 9985 |
+| COMMIT      |
+
+** show customers table contents
+
+#+BEGIN_SRC sql
+  SELECT * FROM customers;
+#+END_SRC
+
+#+RESULTS:
+|   id | first_name | last_name |      phone | email                                 |
+|------+------------+-----------+------------+---------------------------------------|
+|    1 | Malinda    | Luettgen  | 1830178263 | malinda.luettgen@hodkiewiczrobel.org  |
+|    2 | Kevin      | Lehner    | 6298905698 | kevin.lehner@bergnaum.name            |
+|    3 | Erik       | Rodriguez | 6445040698 | erik.rodriguez@larson.com             |
+|    4 | Grover     | Larkin    | 1121572984 | grover.larkin@gerholdcummerata.biz    |
+|    5 | Stuart     | Veum      | 2372496046 | stuart.veum@monahan.net               |
+|    6 | Madelyn    | Bernier   | 5298846404 | madelyn.bernier@okeefe.info           |
+|    7 | Allen      | Kling     | 7690215543 | allen.kling@lindgrenstokes.org        |
+|    8 | Angel      | Corwin    | 1115407615 | angel.corwin@nicolascrona.info        |
+|    9 | Herbert    | Nikolaus  | 7591544841 | herbert.nikolaus@cole.com             |
+|   10 | Margarita  | Block     | 7700771425 | margarita.block@nolanrodriguez.name   |
+| 5456 | Ima        | Kunde     | 3197129587 | ima.kunde@hudsonrunolfsdottir.co      |
+| 6979 | Edison     | Lynch     | 4148521023 | edison.lynch@rohan.info               |
+| 7662 | Eliseo     | Moore     | 1116352879 | eliseo.moore@binsbalistreri.biz       |
+| 8528 | Ethel      | Stokes    | 3842603280 | ethel.stokes@pfannerstillroberts.biz  |
+| 9571 | Jermain    | Kessler   | 1228246130 | jermain.kessler@ondrickalueilwitz.biz |
+
+** Determine percentage of customers who have purchased one of more tickets
+
+
+#+BEGIN_SRC sql
+  SELECT
+    ((
+    SELECT count(DISTINCT customer_id)
+      FROM tickets
+    )::real /
+      (
+        SELECT COUNT(id) FROM customers
+      ) * 100)::decimal(4,2);
+#+END_SRC
+
+#+RESULTS:
+| numeric |
+|---------|
+|   33.33 |

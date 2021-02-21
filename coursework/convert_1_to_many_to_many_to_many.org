@@ -1,0 +1,202 @@
+* Converting one-to-many relationships to many-to-many
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database films7
+:END:
+** Write the SQL statement needed to create a join table that will allow a film to have multiple directors, and directors to have multiple films. Include an id column in this table, and add foreign key constraints to the other columns.
+
+#+BEGIN_SRC sql
+  CREATE TABLE films_directors(
+    id serial PRIMARY KEY,
+    film_id int REFERENCES films (id) ON DELETE CASCADE,
+    director_id int REFERENCES directors (id) ON DELETE CASCADE
+    );
+#+END_SRC
+
+#+RESULTS:
+| CREATE TABLE |
+|--------------|
+rename table to directors_films
+
+#+BEGIN_SRC sql
+  ALTER TABLE films_directors
+    rename TO directors_films;
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+** Write the SQL statements needed to insert data into the new join table to represent the existing one-to-many relationships.
+
+#+BEGIN_SRC sql
+  INSERT INTO directors_films (director_id, film_id)
+  VALUES
+    (1, 1),
+    (2, 2),
+    (3, 3),
+    (3, 7),
+    (4, 4),
+    (4, 10),
+    (5, 5),
+    (6, 6),
+    (7, 8),
+    (8, 9);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 10 |
+|-------------|
+** Write a SQL statement to remove any unneeded columns from films.
+
+
+#+BEGIN_SRC sql
+  ALTER TABLE films
+    DROP COLUMN director_id;
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+** Write a SQL statement that will return the following result:
+
+      title           |         name
+---------------------------+----------------------
+ 12 Angry Men              | Sidney Lumet
+ 1984                      | Michael Anderson
+ Casablanca                | Michael Curtiz
+ Die Hard                  | John McTiernan
+ Let the Right One In      | Michael Anderson
+ The Birdcage              | Mike Nichols
+ The Conversation          | Francis Ford Coppola
+ The Godfather             | Francis Ford Coppola
+ Tinker Tailor Soldier Spy | Tomas Alfredson
+ Wayne's World             | Penelope Spheeris
+(10 rows)
+
+#+BEGIN_SRC sql
+  SELECT f.title, d.name
+    FROM films AS f
+           INNER JOIN directors_films AS df
+               ON f.id = df.film_id
+           INNER JOIN directors AS d
+               ON df.director_id = d.id
+           ORDER BY f.title;
+#+END_SRC
+
+#+RESULTS:
+| title                     | name                 |
+|---------------------------+----------------------|
+| 12 Angry Men              | Sidney Lumet         |
+| 1984                      | Michael Anderson     |
+| Casablanca                | Michael Curtiz       |
+| Die Hard                  | John McTiernan       |
+| Let the Right One In      | Michael Anderson     |
+| The Birdcage              | Mike Nichols         |
+| The Conversation          | Francis Ford Coppola |
+| The Godfather             | Francis Ford Coppola |
+| Tinker Tailor Soldier Spy | Tomas Alfredson      |
+| Wayne's World             | Penelope Spheeris    |
+** Write SQL statements to insert data for the following films into the database:
+
+| Film                   | Year | Genre   | Duration | Directors                      |
+| Fargo                  | 1996 | comedy  |       98 | Joel Coen                      |
+| No Country for Old Men | 2007 | western |      122 | Joel Coen, Ethan Coen          |
+| Sin City               | 2005 | crime   |      124 | Frank Miller, Robert Rodriguez |
+| Spy Kids               | 2001 | scifi   |       88 | Robert Rodriguez               |
+
+First add new directors
+#+BEGIN_SRC sql
+  INSERT INTO directors (name)
+  VALUES
+    ('Joel Coen'),
+    ('Ethan Coen'),
+    ('Frank Miller'),
+    ('Robert Rodriguez');
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 4 |
+|------------|
+
+Then add new films
+
+#+BEGIN_SRC sql
+  INSERT INTO films (title, year, genre, duration)
+  VALUES
+    ('Fargo', 1996, 'comedy', 98),
+    ('No Country for Old Men', 2007, 'western', 122),
+    ('Sin City', 2005, 'crime', 124),
+    ('Spy Kids', 2001, 'scifi', 88);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 4 |
+|------------|
+
+Now add the relationships in directors_films
+
+#+BEGIN_SRC sql
+  INSERT INTO directors_films (director_id, film_id)
+  VALUES
+      (9, 11),
+      (9, 12),
+      (10, 12),
+      (11, 13),
+      (12, 13),
+      (12, 14);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 6 |
+|------------|
+Check results
+
+#+BEGIN_SRC sql
+  SELECT f.title AS Film, f.year AS Year, f.genre AS Genre,
+         f.duration AS Duration, string_agg(d.name, ', ') AS Directors
+    FROM films AS f
+           INNER JOIN directors_films AS df
+               ON f.id = df.film_id
+           INNER JOIN directors AS d
+               ON df.director_id = d.id
+           WHERE d.id >= 9
+                 GROUP BY f.title, f.year, f.genre, f.duration
+   ORDER BY f.title;
+
+#+END_SRC
+
+#+RESULTS:
+| film                   | year | genre   | duration | directors                      |
+|------------------------+------+---------+----------+--------------------------------|
+| Fargo                  | 1996 | comedy  |       98 | Joel Coen                      |
+| No Country for Old Men | 2007 | western |      122 | Joel Coen, Ethan Coen          |
+| Sin City               | 2005 | crime   |      124 | Frank Miller, Robert Rodriguez |
+| Spy Kids               | 2001 | scifi   |       88 | Robert Rodriguez               |
+** Write a SQL statement that determines how many films each director in the database has directed. Sort the results by number of films (greatest first) and then name (in alphabetical order).
+
+
+#+BEGIN_SRC sql
+  SELECT d.name AS Name, COUNT(f.id) AS "Films"
+    FROM directors AS d
+           INNER JOIN directors_films AS df
+               ON d.id = df.director_id
+           INNER JOIN films AS f
+               ON df.film_id = f.id
+  GROUP BY d.id
+  ORDER BY "Films" DESC, d.name;
+#+END_SRC
+
+#+RESULTS:
+| name                 | Films |
+|----------------------+-------|
+| Francis Ford Coppola |     2 |
+| Joel Coen            |     2 |
+| Michael Anderson     |     2 |
+| Robert Rodriguez     |     2 |
+| Ethan Coen           |     1 |
+| Frank Miller         |     1 |
+| John McTiernan       |     1 |
+| Michael Curtiz       |     1 |
+| Mike Nichols         |     1 |
+| Penelope Spheeris    |     1 |
+| Sidney Lumet         |     1 |
+| Tomas Alfredson      |     1 |

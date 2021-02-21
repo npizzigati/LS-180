@@ -1,0 +1,174 @@
+* Using keys
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database using_keys
+:END:
+** select all
+
+#+BEGIN_SRC sql
+  SELECT * FROM films;
+#+END_SRC
+
+#+RESULTS:
+| title                     | year | genre     | director             | duration | id |
+|---------------------------+------+-----------+----------------------+----------+----|
+| Die Hard                  | 1988 | action    | John McTiernan       |      132 |  1 |
+| Casablanca                | 1942 | drama     | Michael Curtiz       |      102 |  2 |
+| The Conversation          | 1974 | thriller  | Francis Ford Coppola |      113 |  3 |
+| 1984                      | 1956 | scifi     | Michael Anderson     |       90 |  4 |
+| Tinker Tailor Soldier Spy | 2011 | espionage | Tomas Alfredson      |      127 |  5 |
+| The Birdcage              | 1996 | comedy    | Mike Nichols         |      118 |  6 |
+| Godzilla                  | 1998 | scifi     | Roland Emmerich      |      139 |  7 |
+| Godzilla                  | 2014 | scifi     | Gareth Edwards       |      123 |  8 |
+** new insertions
+
+#+BEGIN_SRC sql
+  INSERT INTO films(title, year, genre, director, duration) VALUES ('Godzilla', 1998, 'scifi', 'Roland Emmerich', 139);
+  INSERT INTO films(title, year, genre, director, duration) VALUES ('Godzilla', 2014, 'scifi', 'Gareth Edwards', 123);
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 1 |
+|------------|
+| INSERT 0 1 |
+** create table that uses a surrogate key
+
+#+BEGIN_SRC sql
+  CREATE TABLE colors(
+    id serial,
+    name text);
+#+END_SRC
+
+#+RESULTS:
+| CREATE TABLE |
+|--------------|
+** Add rows to table
+
+#+BEGIN_SRC sql
+  INSERT INTO colors (name)
+  VALUES ('red'),
+         ('green'),
+         ('blue');
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 3 |
+|------------|
+** select all
+
+#+BEGIN_SRC sql
+  SELECT * FROM colors;
+#+END_SRC
+
+#+RESULTS:
+| id | name  |
+|----+-------|
+|  1 | red   |
+|  2 | green |
+|  3 | blue  |
+** add unique constraint to id
+
+#+BEGIN_SRC sql
+  ALTER TABLE colors
+    ADD UNIQUE(id);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+** make sure unique constraint is working
+
+#+BEGIN_SRC sql
+  INSERT INTO colors (id, name)
+  VALUES
+    (3, 'purple');
+#+END_SRC
+
+#+RESULTS:
+|---|
+** add some more values
+
+#+BEGIN_SRC sql
+  INSERT INTO colors (name)
+  VALUES
+    ('yellow'),
+    ('orange'),
+    ('purple');
+#+END_SRC
+
+#+RESULTS:
+| INSERT 0 3 |
+|------------|
+** Write a SQL statement that makes a new sequence called "counter".
+
+
+#+BEGIN_SRC sql
+  CREATE SEQUENCE counter;
+#+END_SRC
+
+#+RESULTS:
+| CREATE SEQUENCE |
+|-----------------|
+** Write a SQL statement to retrieve the next value from the sequence created in #1.
+
+
+#+BEGIN_SRC sql
+  SELECT nextval('counter');
+#+END_SRC
+
+#+RESULTS:
+| nextval |
+|---------|
+|       1 |
+** remove counter sequence
+
+#+BEGIN_SRC sql
+  DROP SEQUENCE counter
+#+END_SRC
+
+#+RESULTS:
+| DROP SEQUENCE |
+|---------------|
+** Is it possible to create a sequence that returns only even numbers? The documentation for sequence might be useful.
+
+
+#+BEGIN_SRC sql
+  CREATE SEQUENCE counter increment 2 START 2;
+#+END_SRC
+
+#+RESULTS:
+| CREATE SEQUENCE |
+|-----------------|
+** Write a SQL statement to add an auto-incrementing integer primary key column to the films table.
+
+#+BEGIN_SRC sql
+  ALTER TABLE films
+    ADD COLUMN id int;
+#+END_SRC
+
+#+BEGIN_SRC sql
+  CREATE SEQUENCE counter2;
+  UPDATE films
+         SET id = nextval('counter2');
+#+END_SRC
+
+
+#+BEGIN_SRC sql
+  ALTER TABLE films
+    ADD PRIMARY KEY(id);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+** Write a SQL statement that modifies the table films to remove its primary key while preserving the id column and the values it contains.
+
+
+#+BEGIN_SRC sql
+  ALTER TABLE films
+    DROP CONSTRAINT films_pkey;
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+

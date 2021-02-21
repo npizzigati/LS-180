@@ -1,0 +1,18 @@
+* Total gross income
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database billing
+:END:
+Total Gross Income
+Assuming that everybody in our database has a bill coming due, and that all of them will pay on time, write a query to compute the total gross income we expect to receive.
+#+BEGIN_SRC sql
+  SELECT SUM(s.price) AS gross
+    FROM services AS s
+           INNER JOIN customers_services AS cs
+               ON s.id = cs.service_id;
+
+#+END_SRC
+
+#+RESULTS:
+|  gross |
+|--------|
+| 678.50 |

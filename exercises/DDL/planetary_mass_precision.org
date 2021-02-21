@@ -1,0 +1,27 @@
+* Planetary mass precision
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database extrasolar
+:END:
+** Modify the mass column in the planets table so that it allows fractional masses to any degree of precision required. In addition, make sure the mass is required and positive.
+
+#+BEGIN_SRC sql
+  ALTER TABLE planets
+    ALTER mass TYPE REAL,
+    ALTER mass SET NOT NULL,
+    ADD CHECK(mass > 0);
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|
+
+While we're at it, also make the designation column required.
+
+#+BEGIN_SRC sql
+  ALTER TABLE planets
+    ALTER designation SET NOT NULL;
+#+END_SRC
+
+#+RESULTS:
+| ALTER TABLE |
+|-------------|

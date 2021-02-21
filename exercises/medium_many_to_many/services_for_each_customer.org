@@ -1,0 +1,58 @@
+* Services for each customer
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database billing
+:END:
+
+Write a query to display a list of all customer names together with a comma-separated list of the services they use. Your output should look like this:
+
+     name      |                                services
+---------------+-------------------------------------------------------------------------
+ Pat Johnson   | Unix Hosting, DNS, Whois Registration
+ Nancy Monreal |
+ Lynn Blake    | DNS, Whois Registration, High Bandwidth, Business Support, Unix Hosting
+ Chen Ke-Hua   | High Bandwidth, Unix Hosting
+ Scott Lakso   | DNS, Dedicated Hosting, Unix Hosting
+ Jim Pornot    | Unix Hosting, Dedicated Hosting, Bulk Email
+
+#+BEGIN_SRC sql
+  SELECT c.name, string_agg(s.description, ', ') as services
+    FROM customers AS c
+           LEFT OUTER JOIN customers_services AS cs
+               ON c.id = cs.customer_id
+           LEFT OUTER JOIN services AS s
+               ON cs.service_id = s.id
+           GROUP BY c.name;
+#+END_SRC
+
+#+RESULTS:
+| name          | services                                                                |
+|---------------+-------------------------------------------------------------------------|
+| Pat Johnson   | Unix Hosting, DNS, Whois Registration                                   |
+| Chen Ke-Hua   | Unix Hosting, High Bandwidth                                            |
+| Nancy Monreal |                                                                         |
+| Lynnn Blake   | Unix Hosting, DNS, Whois Registration, High Bandwidth, Business Support |
+| Scott Lakso   | Unix Hosting, DNS, Dedicated Hosting                                    |
+| Jim Pornot    | Unix Hosting, Dedicated Hosting, Bulk Email                             |
+Further Exploration
+Can you modify the above command so the output looks like this?
+
+     name      |    description
+---------------+--------------------
+ Chen Ke-Hua   | High Bandwidth
+               | Unix Hosting
+ Jim Pornot    | Dedicated Hosting
+               | Unix Hosting
+               | Bulk Email
+ Lynn Blake    | Whois Registration
+               | High Bandwidth
+               | Business Support
+               | DNS
+               | Unix Hosting
+ Nancy Monreal |
+ Pat Johnson   | Whois Registration
+               | DNS
+               | Unix Hosting
+ Scott Lakso   | DNS
+               | Dedicated Hosting
+               | Unix Hosting
+

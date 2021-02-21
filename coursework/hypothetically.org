@@ -1,0 +1,64 @@
+* Add new customer
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database billing
+:END:
+The company president is looking to increase revenue. As a prelude to his decision making, he asks for two numbers: the amount of expected income from "big ticket" services (those services that cost more than $100) and the maximum income the company could achieve if it managed to convince all of its customers to select all of the company's big ticket items.
+
+For simplicity, your solution should involve two separate SQL queries: one that reports the current expected income level, and one that reports the hypothetical maximum. The outputs should look like this:
+
+ sum
+--------
+ 500.00
+(1 row)
+
+   sum
+---------
+ 10493.00
+(1 row)
+
+current
+#+BEGIN_SRC sql
+  SELECT SUM(s.price)
+    FROM services s
+           JOIN customers_services cs
+           ON s.id = cs.service_id
+  WHERE s.price > 100;
+#+END_SRC
+
+#+RESULTS:
+|    sum |
+|--------|
+| 500.00 |
+
+hypothetical
+
+#+BEGIN_SRC sql
+  SELECT (count(c.id) * SUM(s.price))
+    FROM customers c
+           RIGHT JOIN customers_services cs
+               ON c.id = cs.customer_id
+           RIGHT JOIN services s
+               ON cs.service_id = s.id
+           WHERE s.price > 100;
+#+END_SRC
+
+#+RESULTS:
+| ?column? |
+|----------|
+|  2998.00 |
+okay, that's not working... let's try with a subquery:
+#+BEGIN_SRC sql
+  WITH sum_of_big_ticket_services AS (
+    SELECT SUM(price)
+      FROM services
+     WHERE price > 100)
+  SELECT COUNT(c.id) * (SELECT SUM FROM sum_of_big_ticket_services) AS sum
+    FROM customers c;
+
+
+#+END_SRC
+
+#+RESULTS:
+|      sum |
+|----------|
+| 10493.00 |

@@ -1,0 +1,361 @@
+* Working with multiple tables
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database multiple_tables
+:END:
+
+** Write a query that determines how many tickets have been sold.
+
+#+BEGIN_SRC sql
+  SELECT COUNT(id) FROM tickets;
+#+END_SRC
+
+#+RESULTS:
+| count |
+|-------|
+|  3783 |
+
+** Write a query that determines how many different customers purchased tickets to at least one event.
+
+
+#+BEGIN_SRC sql
+  SELECT COUNT(DISTINCT customer_id) FROM tickets;
+#+END_SRC
+
+#+RESULTS:
+| count |
+|-------|
+|  1652 |
+
+** Find total customers
+
+#+BEGIN_SRC sql
+  SELECT count(id) FROM customers;
+#+END_SRC
+
+#+RESULTS:
+| count |
+|-------|
+| 10000 |
+
+** Write a query that determines what percentage of the customers in the database have purchased a ticket to one or more of the events.
+
+#+BEGIN_SRC sql
+  SELECT
+    ((
+    SELECT count(DISTINCT customer_id)
+      FROM tickets
+    )::real /
+      (
+        SELECT COUNT(id) FROM customers
+      ) * 100)::decimal(4,2);
+#+END_SRC
+
+#+RESULTS:
+| numeric |
+|---------|
+|   16.52 |
+
+using a join:
+
+#+BEGIN_SRC sql
+  SELECT (count(DISTINCT t.customer_id)::real /
+           COUNT(DISTINCT c.id) * 100)::decimal(4, 2)
+    FROM tickets AS t
+           FULL OUTER JOIN customers AS c
+           ON t.customer_id = c.id;
+
+#+END_SRC
+
+#+RESULTS:
+| numeric |
+|---------|
+|   16.52 |
+
+** Write a query that returns the name of each event and how many tickets were sold for it, in order from most popular to least popular.
+
+#+BEGIN_SRC sql
+  SELECT e.name, COUNT(t.id)
+    FROM events AS e
+           LEFT OUTER JOIN tickets AS t
+                        ON t.event_id = e.id
+   GROUP BY e.name
+   ORDER BY COUNT DESC;
+
+#+END_SRC
+
+#+RESULTS:
+| name                       | count |
+|----------------------------+-------|
+| A-Bomb                     |   555 |
+| Captain Deadshot Wolf      |   541 |
+| Illustrious Firestorm      |   521 |
+| Siren I                    |   457 |
+| Kool-Aid Man               |   439 |
+| Green Husk Strange         |   414 |
+| Ultra Archangel IX         |   359 |
+| Red Hope Summers the Fated |   307 |
+| Magnificent Stardust       |   134 |
+| Red Magus                  |    56 |
+
+** Write a query that returns the user id, email address, and number of events for all customers that have purchased tickets to three events.
+
+#+BEGIN_SRC sql
+  SELECT c.id, c.email, COUNT(t.id)
+    FROM customers AS c
+           JOIN tickets AS t
+               ON c.id = t.customer_id
+   GROUP by c.id
+            HAVING COUNT(t.id) = 3
+  ORDER BY c.id;
+#+END_SRC
+
+#+RESULTS:
+|   id | email                                    | count |
+|------+------------------------------------------+-------|
+|    8 | angel.corwin@nicolascrona.info           |     3 |
+|   74 | jessika.runolfsdottir@price.co           |     3 |
+|  144 | bud.osinski@daugherty.net                |     3 |
+|  164 | brent.kiehn@murphy.co                    |     3 |
+|  280 | blake.weber@turnerschmidt.biz            |     3 |
+|  331 | clyde.pouros@rau.org                     |     3 |
+|  353 | laila.botsford@nolan.com                 |     3 |
+|  361 | tamia.jacobi@feestbode.com               |     3 |
+|  415 | caleigh.klocko@purdy.io                  |     3 |
+|  418 | verona.senger@williamson.io              |     3 |
+|  497 | katheryn.schowalter@schmidtrempel.name   |     3 |
+|  572 | piper.kulas@brakushand.info              |     3 |
+|  604 | elinore.armstrong@trantowhermiston.org   |     3 |
+|  725 | georgianna.bogisich@collierlowe.com      |     3 |
+|  761 | jayden.hoeger@deckowrodriguez.biz        |     3 |
+|  862 | milo.green@mcclure.io                    |     3 |
+|  925 | heloise.shields@langoshbrown.io          |     3 |
+|  973 | lauretta.hayes@daniel.org                |     3 |
+| 1071 | osborne.smith@hoppekohler.name           |     3 |
+| 1096 | nikki.lueilwitz@moore.info               |     3 |
+| 1126 | juwan.witting@hansen.com                 |     3 |
+| 1136 | abraham.howe@koepp.io                    |     3 |
+| 1178 | era.dicki@pfannerstill.org               |     3 |
+| 1199 | leila.kiehn@ryanbechtelar.name           |     3 |
+| 1241 | florida.haley@blickconnelly.io           |     3 |
+| 1349 | anabel.botsford@dietrichokon.info        |     3 |
+| 1382 | margret.treutel@stamm.info               |     3 |
+| 1421 | aidan.rolfson@johnstonfranecki.net       |     3 |
+| 1446 | miles.nikolaus@johnstonsanford.org       |     3 |
+| 1448 | derick.bashirian@larkin.info             |     3 |
+| 1451 | krystal.durgan@graham.org                |     3 |
+| 1455 | kathleen.larkin@weinat.co                |     3 |
+| 1459 | christopher.deckow@yost.co               |     3 |
+| 1468 | carol.ullrich@barrows.com                |     3 |
+| 1482 | elliot.daugherty@hermann.name            |     3 |
+| 1815 | marcus.mcdermott@rippinwintheiser.com    |     3 |
+| 2110 | onie.emard@nikolaus.com                  |     3 |
+| 2325 | santina.howell@kohlersanford.name        |     3 |
+| 2329 | jamie.haag@vandervort.name               |     3 |
+| 2340 | julian.bayer@jakubowski.com              |     3 |
+| 2343 | carole.ryan@steuberkaulke.io             |     3 |
+| 2416 | maybelle.pfannerstill@mccullough.co      |     3 |
+| 2444 | howard.mertz@schneider.net               |     3 |
+| 2456 | amber.windler@considine.name             |     3 |
+| 2508 | nyah.bartell@rueckermacejkovic.name      |     3 |
+| 2529 | brian.lehner@beier.io                    |     3 |
+| 2586 | nannie.roob@steubergerlach.com           |     3 |
+| 2607 | mose.spinka@rogahneffertz.com            |     3 |
+| 2675 | jalon.feeney@wolf.io                     |     3 |
+| 2687 | idell.marvin@willmsharris.biz            |     3 |
+| 2748 | margie.huel@kovacekhintz.biz             |     3 |
+| 2798 | alvis.kuhn@leffler.co                    |     3 |
+| 2816 | korbin.altenwerth@lubowitzjohnston.co    |     3 |
+| 2849 | hazle.waters@hodkiewiczrath.biz          |     3 |
+| 2851 | kira.trantow@schaefer.info               |     3 |
+| 2935 | thora.gottlieb@ortizwhite.io             |     3 |
+| 2941 | petra.little@lockman.net                 |     3 |
+| 3007 | evert.bosco@gleason.net                  |     3 |
+| 3143 | alisa.feeney@marquardt.biz               |     3 |
+| 3189 | jesse.rohan@kris.co                      |     3 |
+| 3265 | marilie.abernathy@heathcote.co           |     3 |
+| 3267 | tyshawn.ryan@rippin.net                  |     3 |
+| 3277 | kirstin.thompson@mitchellsatterfield.net |     3 |
+| 3309 | bud.reilly@kling.com                     |     3 |
+| 3425 | woodrow.flatley@schmeler.name            |     3 |
+| 3472 | astrid.hagenes@wintheiserbreitenberg.org |     3 |
+| 3606 | armani.jacobson@ohara.net                |     3 |
+| 3650 | lucile.haley@tromphuels.biz              |     3 |
+| 3660 | toy.weber@ritchie.info                   |     3 |
+| 3699 | pablo.mayer@ward.info                    |     3 |
+| 3707 | providenci.mayert@hagenes.co             |     3 |
+| 3757 | christiana.nicolas@dooley.info           |     3 |
+| 3790 | chloe.krajcik@ward.name                  |     3 |
+| 3840 | reinhold.russel@ledner.co                |     3 |
+| 3864 | colin.denesik@moore.co                   |     3 |
+| 3919 | savanah.carter@wolf.com                  |     3 |
+| 3932 | wilma.yost@kutchjohnston.org             |     3 |
+| 4052 | josefina.collier@carroll.net             |     3 |
+| 4056 | iliana.cartwright@blandaledner.biz       |     3 |
+| 4081 | diana.luettgen@moen.com                  |     3 |
+| 4108 | easter.kreiger@kling.com                 |     3 |
+| 4117 | brett.goodwin@pfannerstillhilpert.biz    |     3 |
+| 4144 | althea.pfeffer@davis.io                  |     3 |
+| 4177 | aron.deckow@walshruel.name               |     3 |
+| 4204 | kadin.welch@ziemecormier.biz             |     3 |
+| 4227 | gino.west@macejkovickunde.io             |     3 |
+| 4234 | noble.ruecker@lehner.info                |     3 |
+| 4252 | dedric.dooley@nienow.org                 |     3 |
+| 4272 | terrill.labadie@sporer.biz               |     3 |
+| 4275 | leanne.carter@roweullrich.name           |     3 |
+| 4323 | lauryn.west@creminreynolds.com           |     3 |
+| 4388 | carissa.kub@adams.net                    |     3 |
+| 4439 | florida.monahan@feeney.biz               |     3 |
+| 4500 | althea.dickinson@doyleking.org           |     3 |
+| 4508 | lenore.ratke@reichertjacobi.com          |     3 |
+| 4572 | ernestine.crona@johnston.io              |     3 |
+| 4637 | lily.ryan@volkman.com                    |     3 |
+| 4656 | amiya.schiller@boyle.org                 |     3 |
+| 4728 | jayde.becker@hirthe.io                   |     3 |
+| 4779 | chanel.jacobson@harris.co                |     3 |
+| 4814 | jerrold.schimmel@runte.biz               |     3 |
+| 4863 | hadley.steuber@conn.net                  |     3 |
+| 4912 | guy.ankunding@wolffgottlieb.org          |     3 |
+| 4969 | fiona.doyle@beierhahn.org                |     3 |
+| 5049 | trisha.lockman@blanda.net                |     3 |
+| 5099 | ken.klein@streichmayer.com               |     3 |
+| 5120 | gail.purdy@schoen.info                   |     3 |
+| 5130 | christina.hahn@larkinlehner.info         |     3 |
+| 5139 | dexter.mohr@pouros.biz                   |     3 |
+| 5158 | pauline.botsford@oberbrunner.name        |     3 |
+| 5215 | marcos.grant@kleinwisoky.io              |     3 |
+| 5269 | minerva.heller@stokesmraz.name           |     3 |
+| 5271 | roy.ebert@dietrich.biz                   |     3 |
+| 5454 | montana.kris@mosciski.com                |     3 |
+| 5727 | chauncey.gottlieb@dickigleason.biz       |     3 |
+| 5749 | clay.lueilwitz@nikolaumitham.biz         |     3 |
+| 5857 | marquis.bernier@schumm.co                |     3 |
+| 5878 | blair.farrell@bartell.io                 |     3 |
+| 5901 | lenna.predovic@miller.io                 |     3 |
+| 5957 | ian.kessler@rolfsonroberts.co            |     3 |
+| 6218 | jarred.strosin@howe.io                   |     3 |
+| 6231 | sherman.green@berge.io                   |     3 |
+| 6243 | jessica.koepp@ebert.org                  |     3 |
+| 6248 | elda.green@flatley.com                   |     3 |
+| 6372 | valentine.torp@ritchie.name              |     3 |
+| 6404 | terry.kulas@herman.name                  |     3 |
+| 6414 | jamil.mayer@sipes.org                    |     3 |
+| 6473 | claud.prohaska@nikolaus.name             |     3 |
+| 6497 | robyn.ankunding@wintheiser.org           |     3 |
+| 6572 | maggie.hilll@yundtkoepp.co               |     3 |
+| 6775 | travon.hackett@moore.info                |     3 |
+| 6825 | herman.turner@runte.io                   |     3 |
+| 6847 | wilson.mann@spencerhahn.co               |     3 |
+| 6880 | leda.dare@murraypurdy.info               |     3 |
+| 6894 | ed.braun@prosacco.biz                    |     3 |
+| 6908 | axel.lind@spinka.info                    |     3 |
+| 6919 | jana.daniel@boyer.io                     |     3 |
+| 6979 | edison.lynch@rohan.info                  |     3 |
+| 7059 | shanie.dietrich@kautzer.co               |     3 |
+| 7133 | otha.daugherty@bartolettiborer.io        |     3 |
+| 7146 | nya.hintz@nienowcollins.biz              |     3 |
+| 7184 | cassandra.homenick@berge.co              |     3 |
+| 7218 | meghan.lang@white.biz                    |     3 |
+| 7247 | ralph.schulist@senger.org                |     3 |
+| 7340 | kiara.brown@greenfelderkovacek.net       |     3 |
+| 7360 | ernie.runte@grady.name                   |     3 |
+| 7379 | shayna.keeling@hammes.info               |     3 |
+| 7445 | esther.legros@mclaughlinmante.biz        |     3 |
+| 7527 | tracey.mckenzie@reillybrown.co           |     3 |
+| 7532 | madelyn.ullrich@kuhlman.io               |     3 |
+| 7702 | francesco.cummings@swiftharber.org       |     3 |
+| 7711 | waino.mcclure@parisianolson.org          |     3 |
+| 7713 | juston.hirthe@deckow.com                 |     3 |
+| 7806 | dana.parker@borer.net                    |     3 |
+| 7973 | antwan.stiedemann@rodriguezpowlowski.com |     3 |
+| 7980 | eryn.lindgren@abernathylind.co           |     3 |
+| 8026 | kayla.blick@sipes.name                   |     3 |
+| 8113 | katlyn.schowalter@kutch.biz              |     3 |
+| 8116 | zoe.smith@zemlakschuppe.co               |     3 |
+| 8204 | d'angelo.auer@runtemarquardt.org         |     3 |
+| 8317 | queenie.king@wisoky.com                  |     3 |
+| 8364 | alexandre.roob@macgyver.io               |     3 |
+| 8419 | gladyce.rosenbaum@halvorson.biz          |     3 |
+| 8427 | ryleigh.reynolds@gutmann.io              |     3 |
+| 8452 | carlos.johns@block.net                   |     3 |
+| 8485 | julie.lind@bradtke.biz                   |     3 |
+| 8565 | clement.cruickshank@daviskemmer.com      |     3 |
+| 8600 | alfredo.mraz@nikolaus.com                |     3 |
+| 8698 | braeden.cummerata@lebsackhoppe.biz       |     3 |
+| 8817 | august.leuschke@fahey.biz                |     3 |
+| 8831 | johnathon.breitenberg@hartmann.biz       |     3 |
+| 8882 | wanda.crooks@stokes.com                  |     3 |
+| 8888 | newell.shields@mclaughlinschuppe.com     |     3 |
+| 8928 | susanna.gaylord@shanahan.net             |     3 |
+| 8954 | lelah.nikolaus@wehnerkshlerin.net        |     3 |
+| 8966 | elmer.littel@wunsch.name                 |     3 |
+| 8967 | sylvester.o'conner@komills.org           |     3 |
+| 9046 | travis.braun@paucekrogahn.name           |     3 |
+| 9098 | kiana.collins@rutherford.io              |     3 |
+| 9167 | angela.schmitt@kuvalis.io                |     3 |
+| 9321 | ariel.fisher@walsh.io                    |     3 |
+| 9337 | karli.stamm@heathcote.co                 |     3 |
+| 9355 | otis.hegmann@gleasonleffler.org          |     3 |
+| 9363 | cesar.hoppe@wuckertkeebler.org           |     3 |
+| 9405 | toby.hayes@buckridge.org                 |     3 |
+| 9450 | lottie.kemmer@lefflerfunk.org            |     3 |
+| 9509 | van.ernser@smitham.net                   |     3 |
+| 9550 | jamir.kassulke@cormier.net               |     3 |
+| 9663 | missouri.ledner@schaden.info             |     3 |
+| 9789 | max.hills@bechtelarmurazik.org           |     3 |
+| 9795 | johann.weissnat@ankunding.co             |     3 |
+| 9806 | einar.connelly@konopelski.name           |     3 |
+| 9823 | albina.runolfsson@kris.com               |     3 |
+| 9828 | travis.fay@hoppe.info                    |     3 |
+| 9842 | alexanne.kessler@hegmann.org             |     3 |
+| 9850 | carson.daugherty@ortiz.info              |     3 |
+| 9907 | lori.green@ward.co                       |     3 |
+| 9942 | wilfrid.anderson@kriskunde.info          |     3 |
+| 9982 | jessie.hansen@mayer.biz                  |     3 |
+
+These results don't match Launch School's. Checking them below:
+Launch school's results don't include user id 9982. Let's check that this is in fact the right person with the right number of events:
+Check number of events for customer id 9982:
+
+#+BEGIN_SRC sql
+  SELECT c.id, COUNT(t.id)
+    FROM customers AS c
+           INNER JOIN tickets AS t
+               ON c.id = t.customer_id
+   WHERE c.id = 9982
+   GROUP BY c.id;
+#+END_SRC
+
+#+RESULTS:
+|   id | count |
+|------+-------|
+| 9982 |     3 |
+
+Yup, that's right.
+
+** Write a query to print out a report of all tickets purchased by the customer with the email address 'gennaro.rath@mcdermott.co'. The report should include the event name and starts_at and the seat's section name, row, and seat number.
+
+
+#+BEGIN_SRC sql
+  SELECT e.name
+           AS event, e.starts_at,
+         sec.name AS section, sea.row, sea.NUMBER AS seat
+    FROM events AS e
+           INNER JOIN tickets AS t ON e.id = t.event_id
+           INNER JOIN customers AS c ON c.id = t.customer_id
+           INNER JOIN seats AS sea ON t.seat_id = sea.id
+           INNER JOIN sections AS sec ON sea.section_id = sec.id
+  WHERE c.email = 'gennaro.rath@mcdermott.co';
+
+
+#+END_SRC
+
+#+RESULTS:
+| event              | starts_at           | section       | row | seat |
+|--------------------+---------------------+---------------+-----+------|
+| Kool-Aid Man       | 2016-06-14 20:00:00 | Lower Balcony | H   |   10 |
+| Kool-Aid Man       | 2016-06-14 20:00:00 | Lower Balcony | H   |   11 |
+| Green Husk Strange | 2016-02-28 18:00:00 | Orchestra     | O   |   14 |
+| Green Husk Strange | 2016-02-28 18:00:00 | Orchestra     | O   |   15 |
+| Green Husk Strange | 2016-02-28 18:00:00 | Orchestra     | O   |   16 |
+| Ultra Archangel IX | 2016-05-23 18:00:00 | Upper Balcony | G   |    7 |
+| Ultra Archangel IX | 2016-05-23 18:00:00 | Upper Balcony | G   |    8 |

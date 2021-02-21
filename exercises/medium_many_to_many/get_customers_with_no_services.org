@@ -1,0 +1,43 @@
+* Get customers with no services
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database billing
+:END:
+Write a query to retrieve the customer data for every customer who does not currently subscribe to any services.
+
+#+BEGIN_SRC sql
+  SELECT DISTINCT c.*
+    FROM customers AS c
+          LEFT OUTER join customers_services AS cs
+               ON c.id = cs.customer_id
+           WHERE cs.service_id IS NULL;
+#+END_SRC
+
+#+RESULTS:
+| id | name          | payment_token |
+|----+---------------+---------------|
+|  3 | Nancy Monreal | JKWQPJKL      |
+Further Exploration
+Can you write a query that displays all customers with no services and all services that currently don't have any customers? The output should look like this:
+id |     name      | payment_token | id |     description     | price
+----+---------------+---------------+----+---------------------+--------
+  2 | Nancy Monreal | JKWQPJKL      |    |                     |
+    |               |               |  8 | One-to-one Training | 999.00
+(2 rows)
+
+#+BEGIN_SRC sql
+  SELECT c.*, s.*
+    FROM customers AS c
+           FULL OUTER JOIN customers_services AS cs
+                          ON c.id = cs.customer_id
+           FULL OUTER JOIN services AS s
+                          ON cs.service_id = s.id
+   WHERE cs.service_id IS NULL OR
+         cs.customer_id IS NULL;
+
+#+END_SRC
+
+#+RESULTS:
+| id | name          | payment_token | id | description         |  price |
+|----+---------------+---------------+----+---------------------+--------|
+|  3 | Nancy Monreal | JKWQPJKL      |    |                     |        |
+|    |               |               |  7 | One-to-one Training | 999.00 |
