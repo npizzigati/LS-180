@@ -1,0 +1,85 @@
+* Scalar subqueries
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database auction
+:END:
+
+For this exercise, use a scalar subquery to determine the number of bids on each item. The entire query should return a table that has the name of each item along with the number of bids on an item.
+
+Here is the expected output:
+
+Copy Code
+    name      | count
+--------------+-------
+Video Game    |     4
+Outdoor Grill |     1
+Painting      |     8
+Tent          |     4
+Vase          |     9
+Television    |     0
+
+
+#+BEGIN_SRC sql
+  SELECT name, 
+    (SELECT count(id)
+       FROM bids
+      WHERE item_id = items.id
+      GROUP BY item_id)
+    FROM items
+   GROUP BY id, name;
+
+#+END_SRC
+
+#+RESULTS:
+| name          | count |
+|---------------+-------|
+| Video Game    |     4 |
+| Outdoor Grill |     1 |
+| Painting      |     8 |
+| Tent          |     4 |
+| Vase          |     9 |
+| Television    |       |
+
+The above was sort of a wild guess...
+Here's an attempt at doing it the way Launch School did it:
+
+#+BEGIN_SRC sql
+  SELECT name,
+         (SELECT count(item_id)
+            FROM bids
+           WHERE item_id = items.id)
+    FROM items;
+
+#+END_SRC
+
+#+RESULTS:
+| name          | count |
+|---------------+-------|
+| Video Game    |     4 |
+| Outdoor Grill |     1 |
+| Painting      |     8 |
+| Tent          |     4 |
+| Vase          |     9 |
+| Television    |     0 |
+
+And voila.
+
+Further exploration: using a join clause.
+
+#+BEGIN_SRC sql
+  SELECT i.name, count(b.item_id)
+    FROM items i
+           LEFT JOIN bids b
+               ON i.id = b.item_id
+   GROUP BY name;
+
+#+END_SRC
+
+#+RESULTS:
+| name          | count |
+|---------------+-------|
+| Outdoor Grill |     1 |
+| Television    |     0 |
+| Tent          |     4 |
+| Painting      |     8 |
+| Vase          |     9 |
+| Video Game    |     4 |

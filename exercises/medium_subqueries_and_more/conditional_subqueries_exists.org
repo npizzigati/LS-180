@@ -1,0 +1,53 @@
+* Conditional Subqueries: EXISTS
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database auction
+:END:
+Write a SELECT query that returns a list of names of everyone who has bid in the auction. While it is possible (and perhaps easier) to do this with a JOIN clause, we're going to do things differently: use a subquery with the EXISTS clause instead. Here is the expected output:
+
+      name
+-----------------
+ Alison Walker
+ James Quinn
+ Taylor Williams
+ Alexis Jones
+ Gwen Miller
+ Alan Parker
+
+ 
+#+BEGIN_SRC sql
+  SELECT name
+    FROM bidders
+   WHERE EXISTS
+         (SELECT *
+            FROM bids
+         WHERE bids.bidder_id = bidders.id);
+#+END_SRC
+
+#+RESULTS:
+| name            |
+|-----------------|
+| Alison Walker   |
+| James Quinn     |
+| Taylor Williams |
+| Alexis Jones    |
+| Gwen Miller     |
+| Alan Parker     |
+
+Using a join clause
+
+#+BEGIN_SRC sql
+  SELECT DISTINCT name
+    FROM bidders b
+           INNER JOIN bids bi
+           ON b.id = bi.bidder_id;
+#+END_SRC
+
+#+RESULTS:
+| name            |
+|-----------------|
+| James Quinn     |
+| Alexis Jones    |
+| Taylor Williams |
+| Gwen Miller     |
+| Alison Walker   |
+| Alan Parker     |

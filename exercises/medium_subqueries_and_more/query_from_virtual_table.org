@@ -1,0 +1,51 @@
+* Query from a virtual table
+:PROPERTIES:
+:header-args: sql :engine postgresql :dbuser nico :database auction
+:END:
+
+Query From a Virtual Table
+For this exercise, we'll make a slight departure from how we've been using subqueries. We have so far used subqueries to filter our results using a WHERE clause. In this exercise, we will build that filtering into the table that we will query. Write an SQL query that finds the largest number of bids from an individual bidder.
+
+For this exercise, you must use a subquery to generate a result table (or virtual table), and then query that table for the largest number of bids.
+
+Your output should look like this:
+
+Copy Code
+  max
+------
+    9
+(1 row)
+
+#+BEGIN_SRC sql
+  WITH virtual_table AS
+      (SELECT bidder_id, count(id)
+         FROM bids
+        GROUP BY bidder_id
+        ORDER BY count DESC
+        LIMIT 1)
+  SELECT count AS MAX
+    FROM virtual_table;
+#+END_SRC
+
+#+RESULTS:
+| max |
+|-----|
+|   9 |
+
+And, the way the official answer does it:
+
+#+BEGIN_SRC sql
+  WITH virtual_table AS
+      (SELECT bidder_id, count(id)
+         FROM bids
+        GROUP BY bidder_id
+        )
+  SELECT MAX(count)
+    FROM virtual_table;
+#+END_SRC
+
+#+RESULTS:
+| max |
+|-----|
+|   9 |
+
